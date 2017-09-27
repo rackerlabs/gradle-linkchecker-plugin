@@ -1,0 +1,123 @@
+= gradle-linkchecker-plugin
+
+The `gradle-linkchecker-plugin` is a Gradle plugin to check links in a given HTML file.
+Non-URL links (i.e. local files) will be added for further link checking.
+
+This plugin will crawl the links (`a`, `frame`, and `img`) in local HTML files.
+It will validate all links to go out to real files or web locations.
+It will stop there, and not crawl the whole Internet!
+It was originally designed to validate the links between help documents in HTML, that pointed to each other, to local image files, and to some web locations.
+
+This plugin does not require a project, rather an HTML file to start from (`startFile`) and only has a single task, `checklinks`.
+
+This Gradle plugin is based on a https://github.com/JamaSoftwareEngineering/linkchecker-maven-plugin[Maven plugin].
+We acknowledge and are grateful to these developers for their contributions to open source.
+You can find the source code of their original using the link above.
+This new version was created with https://github.com/JamaSoftwareEngineering/linkchecker-maven-plugin/issues/1[their consent].
+
+== Using The Plugin
+
+See this plugin's page in the
+https://plugins.gradle.org/plugin/org.openrepose.gradle.plugins.linkchecker[gradle plugins repo].
+
+== Plugin Conventions
+
+The `linkchecker` convention defines the conventions for this entire plugin.
+
+You can change the defaults with a closure in your build script.
+
+[source, groovy]
+----
+linkchecker {
+  ...
+}
+----
+
+=== Link Checker Plugin Convention
+
+These are the configurable parameters for the Link Checker Plugin.
+If the **Default** is **none**, then the paramenter is **NOT** optional and a value must be provided.
+
+.Link Checker Plugin Parameters
+[cols="2,6,3,2"]
+|===
+| Parameter
+| Description
+| Default
+| Type
+
+| `startFile`
+| The file to start from.
+  Links from the file will be checked.
+  Non-URL links (i.e. local files) will be taken for further link checking (feels like recursion).
+| **none**
+| `String`
+
+| `defaultFile`
+| The file name to be used as the default, in case a (non-URL) link points to a folder.
+  It's what happens on a web server: requests for `http://foo/bar` will serve you (typically) `http://foo/bar/index.html`.
+| `index.html`
+| `String`
+
+| `failOnLocalHost`
+| Should this plugin make your build fail if it encounters links to `localhost`.
+  Typically, depending on something local to the build would hamper the portability of the build.
+| `true`
+| `Boolean`
+
+| `failOnBadUrls`
+| Should this plugin make your build fail if it encounters bad URLs.
+  This is not the default, in appreciation of the fact that (non-local) URLs are out of our control.
+  Typically, validating (non-local) URLs would hamper the reproducibility of the build.
+| `false`
+| `Boolean`
+
+| `reportOnly`
+| Should this plugin make your build fail altogether, or only report its findings.
+| `false`
+| `Boolean`
+|===
+
+== Examples
+
+=== Basic Example
+
+If the default conventions don't need to be modified, then the only thing to configure is the `startFile`.
+
+[source, groovy]
+----
+linkchecker {
+  startFile = $buildDir/asciidoc/html5/index.html
+}
+----
+
+=== Complete Example explicitly stating the `defaults`
+
+This is equivelant to the Basic Example above.
+This one just explicitly states the defaults in addition to configuring the `startFile`.
+
+[source, groovy]
+----
+linkchecker {
+  startFile       = $buildDir/asciidoc/html5/index.html
+  defaultFile     = index.html
+  failOnLocalHost = true
+  failOnBadUrls   = false
+  reportOnly      = false
+}
+----
+
+=== Real World Example
+
+For a real world example of this plugin, please visit the main https://github.com/rackerlabs/repose[Repose project] and take a look at our https://github.com/rackerlabs/repose/blob/master/build.gradle[build file].
+
+== License
+
+This project is licensed under https://www.apache.org/licenses/LICENSE-2.0.txt[the Apache License, Version 2.0].
+
+== Improvements
+
+If you have an idea that would make something a little easier, we'd love to hear about it.
+If you think you can make this plugin better, then simply fork it and submit a pull request.
+
+

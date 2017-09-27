@@ -1,0 +1,5 @@
+= Release Notes
+
+== In Progress Work
+
+* https://repose.atlassian.net/browse/REP-5536[REP-5536] - Converted the original Maven plugin over to a Gradle plugin.

@@ -1,0 +1,38 @@
+buildscript {
+    repositories {
+        jcenter()
+        mavenCentral()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+
+    //********************************************************************************
+    // use local artifacts
+    //--------------------------------------------------------------------------------
+    dependencies {
+        classpath files('../../build/libs/gradle-linkchecker-plugin.jar')                       // gradle unversionedJar
+        //classpath files("/${gradle.gradleHomeDir}/lib/plugins/gradle-linkchecker-plugin.jar") // gradle installPlugin
+        classpath 'com.google.guava:guava:18.0'
+        classpath 'commons-validator:commons-validator:1.4.0'
+        classpath 'org.jsoup:jsoup:1.8.2'
+    }
+    ////********************************************************************************
+    //// use artifacts from the Gradle Plugin repository
+    ////--------------------------------------------------------------------------------
+    //dependencies {
+    //    classpath 'gradle.plugin.org.openrepose:gradle-linkchecker-plugin:0.0.1'
+    //}
+    ////********************************************************************************
+}
+
+repositories {
+    mavenCentral()
+}
+
+apply plugin: 'org.openrepose.gradle.plugins.linkchecker'
+
+linkchecker {
+    startFileName = "${project.rootDir}/src/main/resources/html"
+    reportOnly = true
+}
