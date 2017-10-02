@@ -24,7 +24,8 @@ public class LinkCheckerPluginTask extends DefaultTask {
     void linkcheckerTask() throws IOException, LinkCheckerPluginException {
         LinkCheckerPluginExtension linkCheckerPluginExtension = (LinkCheckerPluginExtension) (getProject().getExtensions().getByName("linkchecker"));
 
-        log.info("Checking links relative to: " + linkCheckerPluginExtension.startFileName + " (recursively)");
+        log.warn("This task can take some time to complete.");
+        log.warn("Run with --info for more information.");
 
         Multimap<String, File> linksToSourceFiles = HashMultimap.create();
         List<String> badLinks = new ArrayList<>();
@@ -54,11 +55,11 @@ public class LinkCheckerPluginTask extends DefaultTask {
                 }
             }
         }
-        log.info("");
-        log.info("Processed " + total + " files");
+
+        log.warn("Processed {} files", total);
+        log.warn(badLinks.size() + " bad links.");
 
         if (!badLinks.isEmpty()) {
-            log.warn(badLinks.size() + " bad links.");
             if(!log.isInfoEnabled()) {
                 log.warn("Run with --info for the list.");
             }

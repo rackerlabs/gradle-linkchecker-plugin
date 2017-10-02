@@ -82,7 +82,7 @@ public class LinkChecker {
         if (!startFile.exists()) {
             throw new IllegalArgumentException("Starting Dir/File '" + startFileName + "' does NOT exist");
         }
-        log.info("Checking links relative to: {} (recursively)", startFile.getAbsolutePath());
+        log.warn("Checking links starting from: {}", startFile.getAbsolutePath());
 
         List<String> todoListLinks = new ArrayList<>();
         final URI startDirURI;
