@@ -125,6 +125,7 @@ public class LinkChecker {
                     try {
                         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                         connection.setRequestMethod("HEAD");
+                        connection.setConnectTimeout(10000);
                         connection.connect();
                         int responseCode = connection.getResponseCode();
                         if (responseCode != HttpURLConnection.HTTP_OK) {
