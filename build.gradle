@@ -82,7 +82,7 @@ task('tagVersion', description: 'Tag the repository with the current version.', 
     scmFactory.create().tag(version)
 }
 
-task('release', description: 'Release the project and publish to public repo.', group: 'release', dependsOn: [publish, tagVersion, publishPlugins])
+task('release', description: 'Release the project and publish to public repo.', group: 'release', dependsOn: [build, publish, tagVersion, publishPlugins])
 
 task unversionedJar(type: Jar, dependsOn: 'jar') {
     version = null
