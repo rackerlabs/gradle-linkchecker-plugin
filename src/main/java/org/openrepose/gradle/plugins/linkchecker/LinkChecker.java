@@ -12,6 +12,7 @@ import org.jsoup.select.Elements;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.net.*;
 import java.util.*;
 
@@ -41,18 +42,21 @@ public class LinkChecker {
     /**
      * Recursively checks the links starting from the startFile.
      *
-     * @param startFileName      The file to start from.
-     *                           Links from the file will be checked.
-     *                           Non-URL links (i.e. local files) will be taken for further link checking (feels like recursion).
-     * @param defaultFile        The file name to be used as the default, in case a (non-URL) link points to a folder.
-     *                           It's what happens on a web server: requests for {@code http://foo/bar} will serve you (typically) {@code http://foo/bar/index.html}.
-     * @param failOnLocalHost    Should this plugin make your build fail if it encounters links to {@code localhost}.
-     *                           Typically, depending on something local to the build would hamper the portability of the build.
-     * @param failOnBadUrls      Should this plugin make your build fail if it encounters bad URLs.
-     *                           This is not the default, in appreciation of the fact that (non-local) URLs are out of our control.
-     *                           Typically, validating (non-local) URLs would hamper the reproducibility of the build.
-     * @param linksToSourceFiles Populated with all the files processed.
-     * @param badLinks           Populated with all the bad links that could not be processed.
+     * @param startFileName            The file to start from.
+     *                                 Links from the file will be checked.
+     *                                 Non-URL links (i.e. local files) will be taken for further link checking (feels like recursion).
+     * @param defaultFile              The file name to be used as the default, in case a (non-URL) link points to a folder.
+     *                                 It's what happens on a web server: requests for {@code http://foo/bar} will serve you (typically) {@code http://foo/bar/index.html}.
+     * @param failOnLocalHost          Should this plugin make your build fail if it encounters links to {@code localhost}.
+     *                                 Typically, depending on something local to the build would hamper the portability of the build.
+     * @param failOnBadUrls            Should this plugin make your build fail if it encounters bad URLs.
+     *                                 This is not the default, in appreciation of the fact that (non-local) URLs are out of our control.
+     *                                 Typically, validating (non-local) URLs would hamper the reproducibility of the build.
+     * @param httpURLConnectionTimeout The specified timeout value, in milliseconds, to be used when opening a communications link to a non-local URL.
+     *                                 A timeout of zero is interpreted as an infinite timeout.
+     *                                 A timeout of less than zero is interpreted to use the system timeout.
+     * @param linksToSourceFiles       Populated with all the files processed.
+     * @param badLinks                 Populated with all the bad links that could not be processed.
      * @return the total number of files processed
      * @throws IllegalArgumentException if the startFileName is null or the file does not exist
      * @throws IOException              if anything goes wrong while trying to access a file
@@ -62,6 +66,7 @@ public class LinkChecker {
             String defaultFile,
             boolean failOnLocalHost,
             boolean failOnBadUrls,
+            int httpURLConnectionTimeout,
             Multimap<String, File> linksToSourceFiles,
             List<String> badLinks
     ) throws IllegalArgumentException, IOException {
@@ -97,7 +102,7 @@ public class LinkChecker {
         for (int i = 0; i < todoListLinks.size(); i++) {
             String link = todoListLinks.get(i);
             if (URL_VALIDATOR.isValid(link)) {
-                processLinkAsUrl(link, failOnLocalHost, failOnBadUrls, badLinks);
+                processLinkAsUrl(link, failOnLocalHost, failOnBadUrls, httpURLConnectionTimeout, badLinks);
             } else {
                 processLinkAsFile(link, defaultFile, startDirURI, todoListLinks, linksToSourceFiles, badLinks);
             }
@@ -109,6 +114,7 @@ public class LinkChecker {
             String link,
             boolean failOnLocalHost,
             boolean failOnBadUrls,
+            int httpURLConnectionTimeout,
             List<String> badLinks
     ) {
         try {
@@ -125,18 +131,20 @@ public class LinkChecker {
                     try {
                         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                         connection.setRequestMethod("HEAD");
-                        connection.setConnectTimeout(10000);
+                        if (httpURLConnectionTimeout >= 0) {
+                            connection.setConnectTimeout(httpURLConnectionTimeout);
+                        }
                         connection.connect();
                         int responseCode = connection.getResponseCode();
                         if (responseCode != HttpURLConnection.HTTP_OK) {
-                            log.info("Got response code {} for URL: {}", responseCode, url);
+                            log.warn("Got response code {} for URL: {}", responseCode, url);
                             addBadUrlIfConfigured(link, failOnBadUrls, badLinks);
                         }
-                    } catch (ConnectException exception) {
-                        log.info("Cannot connect to URL: {}", url);
+                    } catch (InterruptedIOException | ConnectException exception) {
+                        log.warn("Cannot connect to URL: {}", url);
                         addBadUrlIfConfigured(link, failOnBadUrls, badLinks);
                     } catch (IOException exception) {
-                        log.info("Problem with URL: {}", url);
+                        log.warn("Problem with URL: {}", url);
                         addBadUrlIfConfigured(link, failOnBadUrls, badLinks);
                     }
                 }
@@ -144,7 +152,7 @@ public class LinkChecker {
                 log.warn("Only http* supported; not handling URL: {}", url);
             }
         } catch (MalformedURLException exception) {
-            log.info("Bad URL: {}", link, exception);
+            log.warn("Bad URL: {}", link, exception);
             addBadUrlIfConfigured(link, failOnBadUrls, badLinks);
         }
     }
