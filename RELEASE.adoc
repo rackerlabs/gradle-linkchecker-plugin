@@ -1,6 +1,6 @@
 = Release Notes
 
-== In Progress Work
+== 0.2.0 (2017-10-12)
 * https://repose.atlassian.net/browse/REP-6186[REP-6186] - Added the new HTTP URL Connection Timeout parameter and cleaned up the logging so the `--info` option is not required to get useful information.
 
 == 0.1.0 (2017-10-02)

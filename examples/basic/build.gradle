@@ -21,7 +21,7 @@ buildscript {
     // use artifacts from the Gradle Plugin repository
     //--------------------------------------------------------------------------------
     dependencies {
-        classpath 'gradle.plugin.org.openrepose:gradle-linkchecker-plugin:0.1.0'
+        classpath 'gradle.plugin.org.openrepose:gradle-linkchecker-plugin:0.2.0'
     }
     //********************************************************************************
 }
