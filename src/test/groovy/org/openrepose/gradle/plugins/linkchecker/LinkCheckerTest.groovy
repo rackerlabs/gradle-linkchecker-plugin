@@ -17,6 +17,7 @@ class LinkCheckerTest {
                 'index.html',
                 true,
                 false,
+                1,
                 linksToSourceFiles,
                 badLinks
         )

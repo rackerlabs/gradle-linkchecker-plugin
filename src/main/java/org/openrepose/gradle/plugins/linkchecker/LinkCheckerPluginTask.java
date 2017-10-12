@@ -35,22 +35,23 @@ public class LinkCheckerPluginTask extends DefaultTask {
                 linkCheckerPluginExtension.defaultFile,
                 linkCheckerPluginExtension.failOnLocalHost,
                 linkCheckerPluginExtension.failOnBadUrls,
+                linkCheckerPluginExtension.httpURLConnectionTimeout,
                 linksToSourceFiles,
                 badLinks
         );
 
-        log.info("");
+        log.warn("");
         if (badLinks.isEmpty()) {
-            log.info("no bad links");
+            log.warn("no bad links");
         } else {
-            log.info(badLinks.size() + " bad links:");
+            log.warn(badLinks.size() + " bad links:");
             for (String badLink : badLinks) {
-                log.info("\t" + badLink);
+                log.warn("\t" + badLink);
                 Collection<File> sourceFiles = linksToSourceFiles.get(badLink);
                 if (!sourceFiles.isEmpty()) {
-                    log.info("\tbad link referenced from:");
+                    log.warn("\tbad link referenced from:");
                     for (File sourceFile : sourceFiles) {
-                        log.info("\t\t" + sourceFile);
+                        log.warn("\t\t" + sourceFile);
                     }
                 }
             }
@@ -60,9 +61,6 @@ public class LinkCheckerPluginTask extends DefaultTask {
         log.warn(badLinks.size() + " bad links.");
 
         if (!badLinks.isEmpty()) {
-            if(!log.isInfoEnabled()) {
-                log.warn("Run with --info for the list.");
-            }
             if (linkCheckerPluginExtension.reportOnly) {
                 log.warn("Not failing build for bad links as configured");
             } else {
