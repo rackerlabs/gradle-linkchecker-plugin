@@ -11,8 +11,8 @@ buildscript {
     // use local artifacts
     //--------------------------------------------------------------------------------
     //dependencies {
-    //    classpath files('../../build/libs/gradle-linkchecker-plugin.jar')                       // gradle unversionedJar
-    //    //classpath files("/${gradle.gradleHomeDir}/lib/plugins/gradle-linkchecker-plugin.jar") // gradle installPlugin
+    //    //classpath files('../../build/libs/gradle-linkchecker-plugin.jar')                   // gradle unversionedJar
+    //    classpath files("/${gradle.gradleHomeDir}/lib/plugins/gradle-linkchecker-plugin.jar") // gradle installPlugin
     //    classpath 'com.google.guava:guava:18.0'
     //    classpath 'commons-validator:commons-validator:1.4.0'
     //    classpath 'org.jsoup:jsoup:1.8.2'
@@ -21,7 +21,7 @@ buildscript {
     // use artifacts from the Gradle Plugin repository
     //--------------------------------------------------------------------------------
     dependencies {
-        classpath 'gradle.plugin.org.openrepose:gradle-linkchecker-plugin:0.2.0'
+        classpath 'gradle.plugin.org.openrepose:gradle-linkchecker-plugin:0.3.0'
     }
     //********************************************************************************
 }

@@ -1,6 +1,6 @@
 = Release Notes
 
-== In Progress Work
+== 0.3.0 (2017-10-18)
 * https://repose.atlassian.net/browse/REP-6252[REP-6252] - Added the new Ignore Hosts parameter and cleaned up some more logging information.
 
 == 0.2.0 (2017-10-12)
