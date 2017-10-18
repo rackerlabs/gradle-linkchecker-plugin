@@ -35,5 +35,6 @@ apply plugin: 'org.openrepose.gradle.plugins.linkchecker'
 linkchecker {
     startFileName = "${project.rootDir}/src/main/resources/html"
     httpURLConnectionTimeout = 1000
+    ignoreLinks = [/.*\.google\.com/]
     reportOnly = true
 }

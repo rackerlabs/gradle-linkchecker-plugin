@@ -1,5 +1,8 @@
 package org.openrepose.gradle.plugins.linkchecker;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
 public class LinkCheckerPluginExtension {
 
     /**
@@ -21,6 +24,13 @@ public class LinkCheckerPluginExtension {
     public boolean failOnLocalHost = true;
 
     /**
+     * Should this plugin make your build fail if it encounters links to an ignored host. This is not the default and is
+     * typically only enabled if there are troublesome links that would normally require multi-party authentication to
+     * access (e.g. SAML, OAuth).
+     */
+    public boolean failOnIgnoreHost = false;
+
+    /**
      * Should this plugin make your build fail if it encounters bad URLs. This is not the default, in appreciation of
      * the fact that (non-local) URLs are out of our control. Typically, validating (non-local) URLs would hamper the
      * reproducibility of the build
@@ -33,6 +43,13 @@ public class LinkCheckerPluginExtension {
      * A timeout of less than zero is interpreted to use the system timeout.
      */
     public int httpURLConnectionTimeout = -1;
+
+
+    /**
+     * A list of regular expressions of hosts to not even attempt communications with.
+     */
+
+    public Collection<String> ignoreHostRegexs = new ArrayList<>();
 
     /**
      * Should this plugin make your build fail altogether, or only report its findings.
