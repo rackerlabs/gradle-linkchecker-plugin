@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class LinkChecker {
 
@@ -49,12 +50,15 @@ public class LinkChecker {
      *                                 It's what happens on a web server: requests for {@code http://foo/bar} will serve you (typically) {@code http://foo/bar/index.html}.
      * @param failOnLocalHost          Should this plugin make your build fail if it encounters links to {@code localhost}.
      *                                 Typically, depending on something local to the build would hamper the portability of the build.
+     * @param failOnIgnoredHost        Should this plugin make your build fail if it encounters links to an ignored host.
+     *                                 This is not the default and is typically only enabled if there are troublesome links that would normally require multi-party authentication to access (e.g. SAML, OAuth).
      * @param failOnBadUrls            Should this plugin make your build fail if it encounters bad URLs.
      *                                 This is not the default, in appreciation of the fact that (non-local) URLs are out of our control.
      *                                 Typically, validating (non-local) URLs would hamper the reproducibility of the build.
      * @param httpURLConnectionTimeout The specified timeout value, in milliseconds, to be used when opening a communications link to a non-local URL.
      *                                 A timeout of zero is interpreted as an infinite timeout.
      *                                 A timeout of less than zero is interpreted to use the system timeout.
+     * @param ignoreHostRegexs         A list of regular expressions of hosts to not even attempt communications with.
      * @param linksToSourceFiles       Populated with all the files processed.
      * @param badLinks                 Populated with all the bad links that could not be processed.
      * @return the total number of files processed
@@ -65,8 +69,10 @@ public class LinkChecker {
             String startFileName,
             String defaultFile,
             boolean failOnLocalHost,
+            boolean failOnIgnoredHost,
             boolean failOnBadUrls,
             int httpURLConnectionTimeout,
+            Collection<String> ignoreHostRegexs,
             Multimap<String, File> linksToSourceFiles,
             List<String> badLinks
     ) throws IllegalArgumentException, IOException {
@@ -90,21 +96,15 @@ public class LinkChecker {
         log.warn("Checking links starting from: {}", startFile.getAbsolutePath());
 
         List<String> todoListLinks = new ArrayList<>();
-        final URI startDirURI;
-        if (startFile.isDirectory()) {
-            startDirURI = startFile.getAbsoluteFile().toURI();
-        } else {
-            startDirURI = startFile.getParentFile().toURI();
-        }
 
         todoListLinks.add(startFile.getAbsolutePath());
         // don't use foreach as this is a growing list
         for (int i = 0; i < todoListLinks.size(); i++) {
             String link = todoListLinks.get(i);
             if (URL_VALIDATOR.isValid(link)) {
-                processLinkAsUrl(link, failOnLocalHost, failOnBadUrls, httpURLConnectionTimeout, badLinks);
+                processLinkAsUrl(link, failOnLocalHost, failOnIgnoredHost, failOnBadUrls, httpURLConnectionTimeout, ignoreHostRegexs, badLinks);
             } else {
-                processLinkAsFile(link, defaultFile, startDirURI, todoListLinks, linksToSourceFiles, badLinks);
+                processLinkAsFile(link, defaultFile, todoListLinks, linksToSourceFiles, badLinks);
             }
         }
         return todoListLinks.size();
@@ -113,18 +113,27 @@ public class LinkChecker {
     private static void processLinkAsUrl(
             String link,
             boolean failOnLocalHost,
+            boolean failOnIgnoredHost,
             boolean failOnBadUrls,
             int httpURLConnectionTimeout,
+            Collection<String> ignoreHostRegexs,
             List<String> badLinks
     ) {
+        log.info("Processing URL: {}", link);
         try {
             URL url = new URL(link);
             // note that this also matches https
             if (url.getProtocol().startsWith("http")) {
                 // note that this is ignoring 127.0.0.1 altogether, gotta draw a line somewhere
-                if (url.getHost().equals("localhost")) {
+                String host = url.getHost();
+                if (host.equals("localhost")) {
                     log.warn("URL for localhost indicates suspicious environment dependency: {}", url);
                     if (failOnLocalHost) {
+                        badLinks.add(link);
+                    }
+                } else if(!(ignoreHostRegexs.stream().filter(host::matches).collect(Collectors.toList()).isEmpty())) {
+                    log.info("The host destination is configured to be ignored: {}", host);
+                    if (failOnIgnoredHost) {
                         badLinks.add(link);
                     }
                 } else {
@@ -136,15 +145,19 @@ public class LinkChecker {
                         }
                         connection.connect();
                         int responseCode = connection.getResponseCode();
-                        if (responseCode != HttpURLConnection.HTTP_OK) {
+                        if (300 <= responseCode && responseCode < 400) {
+                            log.info("Got response code {} for URL: {}", responseCode, url);
+                        } else if (responseCode != HttpURLConnection.HTTP_OK) {
                             log.warn("Got response code {} for URL: {}", responseCode, url);
                             addBadUrlIfConfigured(link, failOnBadUrls, badLinks);
                         }
-                    } catch (InterruptedIOException | ConnectException exception) {
+                    } catch (InterruptedIOException | ConnectException | UnknownHostException exception) {
                         log.warn("Cannot connect to URL: {}", url);
+                        log.debug("Source:", exception);
                         addBadUrlIfConfigured(link, failOnBadUrls, badLinks);
                     } catch (IOException exception) {
                         log.warn("Problem with URL: {}", url);
+                        log.debug("Source:", exception);
                         addBadUrlIfConfigured(link, failOnBadUrls, badLinks);
                     }
                 }
@@ -166,11 +179,11 @@ public class LinkChecker {
     private static void processLinkAsFile(
             String fileLink,
             String defaultFile,
-            URI startDirURI,
             List<String> todoListLinks,
             Multimap<String, File> linksToSourceFiles,
             List<String> badLinks
     ) throws IOException {
+        log.info("Processing File: {}", fileLink);
         File file = new File(fileLink);
         log.debug("file = {}", file.getAbsolutePath());
         if (file.isDirectory()) {

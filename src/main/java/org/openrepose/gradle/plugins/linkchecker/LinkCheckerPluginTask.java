@@ -25,7 +25,8 @@ public class LinkCheckerPluginTask extends DefaultTask {
         LinkCheckerPluginExtension linkCheckerPluginExtension = (LinkCheckerPluginExtension) (getProject().getExtensions().getByName("linkchecker"));
 
         log.warn("This task can take some time to complete.");
-        log.warn("Run with --info for more information.");
+        log.warn("Run with --info or --debug for more information.");
+        log.warn("");
 
         Multimap<String, File> linksToSourceFiles = HashMultimap.create();
         List<String> badLinks = new ArrayList<>();
@@ -34,17 +35,17 @@ public class LinkCheckerPluginTask extends DefaultTask {
                 linkCheckerPluginExtension.startFileName,
                 linkCheckerPluginExtension.defaultFile,
                 linkCheckerPluginExtension.failOnLocalHost,
+                linkCheckerPluginExtension.failOnIgnoreHost,
                 linkCheckerPluginExtension.failOnBadUrls,
                 linkCheckerPluginExtension.httpURLConnectionTimeout,
+                linkCheckerPluginExtension.ignoreHostRegexs,
                 linksToSourceFiles,
                 badLinks
         );
 
         log.warn("");
-        if (badLinks.isEmpty()) {
-            log.warn("no bad links");
-        } else {
-            log.warn(badLinks.size() + " bad links:");
+        log.warn("Processed {} files with {} bad links.", total, badLinks.size());
+        if (!badLinks.isEmpty()) {
             for (String badLink : badLinks) {
                 log.warn("\t" + badLink);
                 Collection<File> sourceFiles = linksToSourceFiles.get(badLink);
@@ -55,12 +56,6 @@ public class LinkCheckerPluginTask extends DefaultTask {
                     }
                 }
             }
-        }
-
-        log.warn("Processed {} files", total);
-        log.warn(badLinks.size() + " bad links.");
-
-        if (!badLinks.isEmpty()) {
             if (linkCheckerPluginExtension.reportOnly) {
                 log.warn("Not failing build for bad links as configured");
             } else {
