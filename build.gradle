@@ -33,7 +33,7 @@ targetCompatibility = 1.8
 dependencies {
     compile gradleApi()
     compile localGroovy()
-    compile 'org.codehaus.groovy:groovy-all:2.4.7'
+    compile 'org.codehaus.groovy:groovy-all:2.4.12'
     compile 'org.slf4j:slf4j-api:1.7.6'
     compile 'commons-validator:commons-validator:1.4.0'
     compile 'org.jsoup:jsoup:1.8.2'
