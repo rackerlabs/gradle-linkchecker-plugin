@@ -1,5 +1,9 @@
 = Release Notes
 
+== In Progress Work
+* https://repose.atlassian.net/browse/REP-6770[REP-6770] - Added support for the UP-TO-DATE checks allowing incremental builds to work.
+** This version has backwards incompatible configuration changes that need to be put in place before use.
+
 == 0.3.0 (2017-10-18)
 * https://repose.atlassian.net/browse/REP-6252[REP-6252] - Added the new Ignore Hosts parameter and cleaned up some more logging information.
 

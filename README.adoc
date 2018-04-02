@@ -46,12 +46,12 @@ If the **Default** is **none**, then the paramenter is **NOT** optional and a va
 | Default
 | Type
 
-| `startFile`
-| The file to start from.
+| `inputDir`
+| The directory that will be used for UP-TO-DATE checks.
   Links from the file will be checked.
   Non-URL links (i.e. local files) will be taken for further link checking (feels like recursion).
 | **none**
-| `String`
+| `File`
 
 | `defaultFile`
 | The file name to be used as the default, in case a (non-URL) link points to a folder.
@@ -59,10 +59,24 @@ If the **Default** is **none**, then the paramenter is **NOT** optional and a va
 | `index.html`
 | `String`
 
+| `startFile`
+| The file to start from.
+  If this file is not absolute, then it is assumed to be relative to the `inputDir`.
+  Links from the file will be checked.
+  Non-URL links (i.e. local files) will be taken for further link checking (feels like recursion).
+| `index.html`
+| `File`
+
 | `failOnLocalHost`
 | Should this plugin make your build fail if it encounters links to `localhost`.
   Typically, depending on something local to the build would hamper the portability of the build.
 | `true`
+| `Boolean`
+
+| `failOnIgnoreHost`
+| Should this plugin make your build fail if it encounters links to an ignored host.
+  Typically only enabled if there are troublesome links that would normally require multi-party authentication to access (e.g. SAML, OAuth).
+| `false`
 | `Boolean`
 
 | `failOnBadUrls`
@@ -72,10 +86,27 @@ If the **Default** is **none**, then the paramenter is **NOT** optional and a va
 | `false`
 | `Boolean`
 
+| `httpURLConnectionTimeout`
+| Sets a specified timeout value, in milliseconds, to be used when opening a communications link to a non-local URL.
+  A timeout of zero is interpreted as an infinite timeout.
+  A timeout of less than zero is interpreted to use the system timeout.
+| `-1`
+| `int`
+
+| `ignoreHostRegexs`
+| A list of regular expressions of hosts to not even attempt communications with.
+| empty `List`
+| `Collection<String>`
+
 | `reportOnly`
 | Should this plugin make your build fail altogether, or only report its findings.
 | `false`
 | `Boolean`
+
+| `logFile`
+| This is the file where results are logged.
+| **none**
+| `File`
 |===
 
 == Examples
@@ -87,23 +118,29 @@ If the default conventions don't need to be modified, then the only thing to con
 [source, groovy]
 ----
 linkchecker {
-  startFile = $buildDir/asciidoc/html5/index.html
+  inputDir = new File("$buildDir/asciidoc/html5/")
+  logFile  = new File("$buildDir/reports/linkchecker.txt")
 }
 ----
 
 === Complete Example explicitly stating the `defaults`
 
-This is equivelant to the Basic Example above.
+This is equivalent to the Basic Example above.
 This one just explicitly states the defaults in addition to configuring the `startFile`.
 
 [source, groovy]
 ----
 linkchecker {
-  startFile       = $buildDir/asciidoc/html5/index.html
-  defaultFile     = index.html
-  failOnLocalHost = true
-  failOnBadUrls   = false
-  reportOnly      = false
+  inputDir                 = new File("$buildDir/asciidoc/html5/")
+  defaultFile              = index.html
+  startFile                = new File("index.html")
+  failOnLocalHost          = true
+  failOnIgnoreHost         = false
+  failOnBadUrls            = false
+  httpURLConnectionTimeout = -1
+  ignoreHostRegexs         = []
+  reportOnly               = false
+  logFile                  = new File("$buildDir/reports/linkchecker.txt")
 }
 ----
 
