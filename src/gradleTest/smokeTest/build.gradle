@@ -10,7 +10,6 @@ linkchecker {
     httpURLConnectionTimeout = 1000
     ignoreHostRegexs = [/.*\.google\.com/]
     reportOnly = true
-    logFile = new File("$buildDir/reports/linkchecker.txt")
 }
 
 task runGradleTest { dependsOn tasks.linkchecker }

@@ -1,5 +1,8 @@
 package org.openrepose.gradle.plugins.linkchecker;
 
+import org.gradle.api.Project;
+import org.gradle.internal.impldep.org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -65,4 +68,17 @@ public class LinkCheckerPluginExtension {
      * This is the file where results are logged.
      */
     public File logFile;
+
+    /**
+     * This class should not be instantiated without any arguments.
+     */
+    private LinkCheckerPluginExtension() {
+    }
+
+    /**
+     * Constructor that sets required defaults based on the project.
+     */
+    public LinkCheckerPluginExtension(@NotNull Project project) {
+        logFile = new File(project.getBuildDir(), "reports/linkchecker.txt");
+    }
 }

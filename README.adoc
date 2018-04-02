@@ -8,7 +8,7 @@ It will validate all links to go out to real files or web locations.
 It will stop there, and not crawl the whole Internet!
 It was originally designed to validate the links between help documents in HTML, that pointed to each other, to local image files, and to some web locations.
 
-This plugin does not require a project, rather an HTML file to start from (`startFile`) and only has a single task, `checklinks`.
+This plugin does not require dynamic content, rather just a directory with an HTML file to start from (`inputDir`) and it only has a single task, `checklinks`.
 
 This Gradle plugin is based on a https://github.com/JamaSoftwareEngineering/linkchecker-maven-plugin[Maven plugin].
 We acknowledge and are grateful to these developers for their contributions to open source.
@@ -36,7 +36,7 @@ linkchecker {
 === Link Checker Plugin Convention
 
 These are the configurable parameters for the Link Checker Plugin.
-If the **Default** is **none**, then the paramenter is **NOT** optional and a value must be provided.
+If the **Default** is **none**, then the parameter is **NOT** optional and a value must be provided.
 
 .Link Checker Plugin Parameters
 [cols="2,6,3,2"]
@@ -105,7 +105,7 @@ If the **Default** is **none**, then the paramenter is **NOT** optional and a va
 
 | `logFile`
 | This is the file where results are logged.
-| **none**
+| `$buildDir/reports/linkchecker.txt`
 | `File`
 |===
 
@@ -113,13 +113,12 @@ If the **Default** is **none**, then the paramenter is **NOT** optional and a va
 
 === Basic Example
 
-If the default conventions don't need to be modified, then the only thing to configure is the `startFile`.
+If the default conventions don't need to be modified, then the only thing to configure is the `inputDir`.
 
 [source, groovy]
 ----
 linkchecker {
   inputDir = new File("$buildDir/asciidoc/html5/")
-  logFile  = new File("$buildDir/reports/linkchecker.txt")
 }
 ----
 

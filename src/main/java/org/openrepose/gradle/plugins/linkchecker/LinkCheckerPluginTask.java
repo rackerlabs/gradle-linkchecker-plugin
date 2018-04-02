@@ -92,7 +92,12 @@ public class LinkCheckerPluginTask extends DefaultTask {
                 printWriter.close();
             }
         } catch (IOException e) {
-            log.warn("Failed to write output!", e);
+            log.info("Failed to write output!", e);
+            throw new LinkCheckerPluginException(
+                    String.format(
+                            "Failing build for bad log file: %s",
+                            linkCheckerPluginExtension.logFile.getAbsolutePath()
+                    ), e);
         }
     }
 

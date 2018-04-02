@@ -37,7 +37,6 @@ linkchecker {
     httpURLConnectionTimeout = 1000
     ignoreHostRegexs = [/.*\.google\.com/]
     reportOnly = true
-    logFile = new File("$buildDir/reports/linkchecker.txt")
 }
 
 // To integrate with the Java plugin
