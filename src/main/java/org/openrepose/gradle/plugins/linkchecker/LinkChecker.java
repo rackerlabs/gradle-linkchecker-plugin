@@ -13,9 +13,13 @@ import org.jsoup.select.Elements;
 import java.io.File;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.io.PrintWriter;
 import java.net.*;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static org.gradle.api.logging.LogLevel.*;
+import static org.openrepose.gradle.plugins.linkchecker.LinkCheckerPluginTask.logMsg;
 
 public class LinkChecker {
 
@@ -43,7 +47,8 @@ public class LinkChecker {
     /**
      * Recursively checks the links starting from the startFile.
      *
-     * @param startFileName            The file to start from.
+     * @param printWriter              The file to log to.
+     * @param startFile                The file to start from.
      *                                 Links from the file will be checked.
      *                                 Non-URL links (i.e. local files) will be taken for further link checking (feels like recursion).
      * @param defaultFile              The file name to be used as the default, in case a (non-URL) link points to a folder.
@@ -66,7 +71,8 @@ public class LinkChecker {
      * @throws IOException              if anything goes wrong while trying to access a file
      */
     public static int checkLinks(
-            String startFileName,
+            PrintWriter printWriter,
+            File startFile,
             String defaultFile,
             boolean failOnLocalHost,
             boolean failOnIgnoredHost,
@@ -76,8 +82,8 @@ public class LinkChecker {
             Multimap<String, File> linksToSourceFiles,
             List<String> badLinks
     ) throws IllegalArgumentException, IOException {
-        if (startFileName == null) {
-            throw new IllegalArgumentException("'startFileName' can NOT be NULL");
+        if (startFile == null) {
+            throw new IllegalArgumentException("'startFile' can NOT be NULL");
         }
         if (defaultFile == null) {
             defaultFile = "index.html";
@@ -89,11 +95,10 @@ public class LinkChecker {
             badLinks = new ArrayList<>();
         }
 
-        File startFile = new File(startFileName);
         if (!startFile.exists()) {
-            throw new IllegalArgumentException("Starting Dir/File '" + startFileName + "' does NOT exist");
+            throw new IllegalArgumentException("Starting Dir/File '" + startFile.getAbsolutePath() + "' does NOT exist");
         }
-        log.warn("Checking links starting from: {}", startFile.getAbsolutePath());
+        logMsg(INFO, printWriter, "Checking links starting from: {}", startFile.getAbsolutePath());
 
         List<String> todoListLinks = new ArrayList<>();
 
@@ -102,15 +107,16 @@ public class LinkChecker {
         for (int i = 0; i < todoListLinks.size(); i++) {
             String link = todoListLinks.get(i);
             if (URL_VALIDATOR.isValid(link)) {
-                processLinkAsUrl(link, failOnLocalHost, failOnIgnoredHost, failOnBadUrls, httpURLConnectionTimeout, ignoreHostRegexs, badLinks);
+                processLinkAsUrl(printWriter, link, failOnLocalHost, failOnIgnoredHost, failOnBadUrls, httpURLConnectionTimeout, ignoreHostRegexs, badLinks);
             } else {
-                processLinkAsFile(link, defaultFile, todoListLinks, linksToSourceFiles, badLinks);
+                processLinkAsFile(printWriter, link, defaultFile, todoListLinks, linksToSourceFiles, badLinks);
             }
         }
         return todoListLinks.size();
     }
 
     private static void processLinkAsUrl(
+            PrintWriter printWriter,
             String link,
             boolean failOnLocalHost,
             boolean failOnIgnoredHost,
@@ -119,7 +125,7 @@ public class LinkChecker {
             Collection<String> ignoreHostRegexs,
             List<String> badLinks
     ) {
-        log.info("Processing URL: {}", link);
+        logMsg(INFO, printWriter, "Processing URL: {}", link);
         try {
             URL url = new URL(link);
             // note that this also matches https
@@ -127,12 +133,12 @@ public class LinkChecker {
                 // note that this is ignoring 127.0.0.1 altogether, gotta draw a line somewhere
                 String host = url.getHost();
                 if (host.equals("localhost")) {
-                    log.warn("URL for localhost indicates suspicious environment dependency: {}", url);
+                    logMsg(INFO, printWriter, "URL of localhost indicates suspicious environment dependency: {}", url);
                     if (failOnLocalHost) {
                         badLinks.add(link);
                     }
-                } else if(!(ignoreHostRegexs.stream().filter(host::matches).collect(Collectors.toList()).isEmpty())) {
-                    log.info("The host destination is configured to be ignored: {}", host);
+                } else if (!(ignoreHostRegexs.stream().filter(host::matches).collect(Collectors.toList()).isEmpty())) {
+                    logMsg(INFO, printWriter, "The host destination is configured to be ignored: {}", host);
                     if (failOnIgnoredHost) {
                         badLinks.add(link);
                     }
@@ -146,26 +152,26 @@ public class LinkChecker {
                         connection.connect();
                         int responseCode = connection.getResponseCode();
                         if (300 <= responseCode && responseCode < 400) {
-                            log.info("Got response code {} for URL: {}", responseCode, url);
+                            logMsg(INFO, printWriter, "Got response code {} for URL: {}", responseCode, url);
                         } else if (responseCode != HttpURLConnection.HTTP_OK) {
-                            log.warn("Got response code {} for URL: {}", responseCode, url);
+                            logMsg(WARN, printWriter, "Got response code {} for URL: {}", responseCode, url);
                             addBadUrlIfConfigured(link, failOnBadUrls, badLinks);
                         }
                     } catch (InterruptedIOException | ConnectException | UnknownHostException exception) {
-                        log.warn("Cannot connect to URL: {}", url);
-                        log.debug("Source:", exception);
+                        logMsg(WARN, printWriter, "Cannot connect to URL: {}", url);
+                        logMsg(DEBUG, printWriter, "Source:", exception);
                         addBadUrlIfConfigured(link, failOnBadUrls, badLinks);
                     } catch (IOException exception) {
-                        log.warn("Problem with URL: {}", url);
-                        log.debug("Source:", exception);
+                        logMsg(WARN, printWriter, "Problem with URL: {}", url);
+                        logMsg(DEBUG, printWriter, "Source:", exception);
                         addBadUrlIfConfigured(link, failOnBadUrls, badLinks);
                     }
                 }
             } else {
-                log.warn("Only http* supported; not handling URL: {}", url);
+                logMsg(INFO, printWriter, "Only http* supported; not handling URL: {}", url);
             }
         } catch (MalformedURLException exception) {
-            log.warn("Bad URL: {}", link, exception);
+            logMsg(WARN, printWriter, "Bad URL: {}", link, exception);
             addBadUrlIfConfigured(link, failOnBadUrls, badLinks);
         }
     }
@@ -177,21 +183,22 @@ public class LinkChecker {
     }
 
     private static void processLinkAsFile(
+            PrintWriter printWriter,
             String fileLink,
             String defaultFile,
             List<String> todoListLinks,
             Multimap<String, File> linksToSourceFiles,
             List<String> badLinks
     ) throws IOException {
-        log.info("Processing File: {}", fileLink);
+        logMsg(INFO, printWriter, "Processing File: {}", fileLink);
         File file = new File(fileLink);
-        log.debug("file = {}", file.getAbsolutePath());
+        logMsg(DEBUG, printWriter, "file = {}", file.getAbsolutePath());
         if (file.isDirectory()) {
             file = new File(file, defaultFile);
         }
-        log.debug("file = {}", file.getAbsolutePath());
+        logMsg(DEBUG, printWriter, "file = {}", file.getAbsolutePath());
         if (file.exists()) {
-            log.debug("file does exist");
+            logMsg(DEBUG, printWriter, "file does exist");
             try {
                 Document document = Jsoup.parse(file, "UTF-8", file.getParentFile().getAbsolutePath());
                 for (String elementName : ELEMENTS_TO_ATTRIBUTES.keySet()) {
@@ -201,7 +208,7 @@ public class LinkChecker {
                     for (Element element : elements) {
                         String link = element.attr(attributeName);
                         if (link.startsWith("javascript:") || link.startsWith("mailto:")) {
-                            log.debug("Ignoring: {}", link);
+                            logMsg(DEBUG, printWriter, "Ignoring: {}", link);
                         } else {
                             // IF this is a local resource link,
                             // THEN make it relative to the starting directory.
@@ -210,7 +217,7 @@ public class LinkChecker {
                                 link = new File(file.getParent(), linkWithoutFragment).getCanonicalPath();
                             }
                             if (todoListLinks.contains(link)) {
-                                log.debug("Already marked: {}", link);
+                                logMsg(DEBUG, printWriter, "Already marked: {}", link);
                             } else {
                                 todoListLinks.add(link);
                             }
@@ -222,7 +229,7 @@ public class LinkChecker {
                 throw new IOException("file cannot be read: " + file, e);
             }
         } else {
-            log.debug("file does NOT exist");
+            logMsg(DEBUG, printWriter, "file does NOT exist");
             badLinks.add(fileLink);
         }
     }
