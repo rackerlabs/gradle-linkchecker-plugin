@@ -1,6 +1,6 @@
 = Release Notes
 
-== In Progress Work
+== 1.0.0 (2018-04-02)
 * https://repose.atlassian.net/browse/REP-6770[REP-6770] - Added support for the UP-TO-DATE checks allowing incremental builds to work.
 ** This version has backwards incompatible configuration changes that need to be put in place before use.
 

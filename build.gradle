@@ -1,5 +1,5 @@
 group = 'org.openrepose'
-def baseVersion = '0.3.0'
+def baseVersion = '1.0.0'
 version = project.hasProperty('release') ? baseVersion : "$baseVersion-SNAPSHOT"
 description = "Gradle plugin to ease development containg HTML using the linkchecker task"
 
