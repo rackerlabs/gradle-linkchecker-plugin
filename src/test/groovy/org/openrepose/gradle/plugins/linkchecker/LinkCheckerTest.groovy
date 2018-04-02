@@ -14,7 +14,8 @@ class LinkCheckerTest {
         def badLinks = new ArrayList<String>()
 
         int total = LinkChecker.checkLinks(
-                './examples/basic/src/main/resources/html',
+                null,
+                new File('./example/src/main/resources/html'),
                 'index.html',
                 true,
                 false,
@@ -37,7 +38,8 @@ class LinkCheckerTest {
         def badLinks = new ArrayList<String>()
 
         int total = LinkChecker.checkLinks(
-                './examples/basic/src/main/resources/html',
+                null,
+                new File('./example/src/main/resources/html'),
                 'index.html',
                 true,
                 false,
@@ -60,7 +62,8 @@ class LinkCheckerTest {
         def badLinks = new ArrayList<String>()
 
         int total = LinkChecker.checkLinks(
-                './examples/basic/src/main/resources/html',
+                null,
+                new File('./example/src/main/resources/html'),
                 'index.html',
                 true,
                 false,
@@ -83,7 +86,8 @@ class LinkCheckerTest {
         def badLinks = new ArrayList<String>()
 
         int total = LinkChecker.checkLinks(
-                './examples/basic/src/main/resources/html',
+                null,
+                new File('./example/src/main/resources/html'),
                 'index.html',
                 true,
                 true,

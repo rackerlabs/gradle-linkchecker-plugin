@@ -1,0 +1,15 @@
+repositories {
+    jcenter()
+    mavenCentral()
+}
+
+apply plugin: 'org.openrepose.gradle.plugins.linkchecker'
+
+linkchecker {
+    inputDir = new File("${project.rootDir}/../../../../example/src/main/resources/html/")
+    httpURLConnectionTimeout = 1000
+    ignoreHostRegexs = [/.*\.google\.com/]
+    reportOnly = true
+}
+
+task runGradleTest { dependsOn tasks.linkchecker }
