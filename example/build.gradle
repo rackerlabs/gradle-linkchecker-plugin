@@ -1,18 +1,18 @@
 buildscript {
     repositories {
-        jcenter()
-        mavenCentral()
         maven {
             url "https://plugins.gradle.org/m2/"
         }
+        jcenter()
+        mavenCentral()
     }
 
     //********************************************************************************
     // use local artifacts
     //--------------------------------------------------------------------------------
     //dependencies {
-    //    //classpath files('../../build/libs/gradle-linkchecker-plugin.jar')                   // gradle unversionedJar
-    //    classpath files("/${gradle.gradleHomeDir}/lib/plugins/gradle-linkchecker-plugin.jar") // gradle installPlugin
+    //    //classpath files('../../build/libs/gradle-linkchecker-plugin.jar')                   // ./gradlew unversionedJar
+    //    classpath files("/${gradle.gradleHomeDir}/lib/plugins/gradle-linkchecker-plugin.jar") // ./gradlew installPlugin
     //    classpath 'com.google.guava:guava:18.0'
     //    classpath 'commons-validator:commons-validator:1.4.0'
     //    classpath 'org.jsoup:jsoup:1.8.2'
@@ -33,8 +33,13 @@ repositories {
 apply plugin: 'org.openrepose.gradle.plugins.linkchecker'
 
 linkchecker {
-    startFileName = "${project.rootDir}/src/main/resources/html"
+    inputDir = new File("${project.rootDir}/src/main/resources/html")
     httpURLConnectionTimeout = 1000
-    ignoreLinks = [/.*\.google\.com/]
+    ignoreHostRegexs = [/.*\.google\.com/]
     reportOnly = true
+    logFile = new File("$buildDir/reports/linkchecker.txt")
 }
+
+// To integrate with the Java plugin
+apply plugin: 'java'
+check.dependsOn tasks.linkchecker
