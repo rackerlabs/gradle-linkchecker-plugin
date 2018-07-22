@@ -147,6 +147,14 @@ linkchecker {
 
 For a real world example of this plugin, please visit the main https://github.com/rackerlabs/repose[Repose project] and take a look at our https://github.com/rackerlabs/repose/blob/master/build.gradle[build file].
 
+== Similar Projects
+The https://github.com/aim42/htmlSanityCheck[HtmlSanityChecker] is an
+(open source) gradle plugin to check HTML files for any kinds of
+issues, e.g. missing images, broken cross-references etc.
+It creates a JUnit-like report and might be a complement
+to this `gradle-linkchecker-plugin`.
+
+
 == License
 
 This project is licensed under https://www.apache.org/licenses/LICENSE-2.0.txt[the Apache License, Version 2.0].
@@ -155,5 +163,3 @@ This project is licensed under https://www.apache.org/licenses/LICENSE-2.0.txt[t
 
 If you have an idea that would make something a little easier, we'd love to hear about it.
 If you think you can make this plugin better, then simply fork it and submit a pull request.
-
-
