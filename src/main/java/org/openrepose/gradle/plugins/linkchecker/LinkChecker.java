@@ -185,6 +185,8 @@ public class LinkChecker {
             } else if (responseCode != HttpURLConnection.HTTP_OK) {
                 logMsg(WARN, printWriter, "Got response code {} for URL: {} => {}", responseCode, requestMethod, url);
                 return false;
+            } else {
+                logMsg(INFO, printWriter, "Got response code {} for URL: {} => {}", responseCode, requestMethod, url);
             }
         } catch (InterruptedIOException | ConnectException | UnknownHostException exception) {
             logMsg(WARN, printWriter, "Cannot connect to URL: {}", url);
