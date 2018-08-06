@@ -5,6 +5,8 @@ import com.google.common.collect.Multimap
 import org.junit.Test
 
 import static org.junit.Assert.assertEquals
+import static org.junit.Assert.assertTrue
+import static org.junit.Assert.assertFalse
 
 class LinkCheckerTest {
     @Test
@@ -117,5 +119,62 @@ class LinkCheckerTest {
         assertEquals("total", 10, total)
         assertEquals("linksToSourceFiles", 9, linksToSourceFiles.size())
         assertEquals("badLinks", 2, badLinks.size())
+    }
+
+    @Test
+    public void checkUrlWithMultipleRequestMethods() {
+
+        boolean valid = LinkChecker.checkUrl(['HEAD','GET'],
+                "https://www.linkedin.com/groups/39757".toURL(),
+                -1,
+                new PrintWriter(System.out)
+        )
+
+        assertTrue(valid)
+
+        valid = LinkChecker.checkUrl(['HEAD','GET'],
+                "http://plugins.grails.org".toURL(),
+                -1,
+                new PrintWriter(System.out)
+        )
+        assertTrue(valid)
+
+        valid = LinkChecker.checkUrl(['HEAD','GET'],
+                "https://github.com/grails/grails-core/releases/download/v3.3.6/grails-3.3.6.zip".toURL(),
+                -1,
+                new PrintWriter(System.out)
+        )
+
+        assertTrue(valid)
+
+        valid = LinkChecker.checkUrl(['HEAD','GET'],
+                "https://github.com/grails/grails-core/releases/download/v9.9.9/grails-3.3.6.zip".toURL(),
+                -1,
+                new PrintWriter(System.out)
+        )
+
+        assertFalse(valid)
+
+    }
+
+    @Test
+    public void checkUrlWithSingleRequestMethods() {
+
+        boolean valid = LinkChecker.checkUrl('HEAD',
+                "https://www.linkedin.com/groups/39757".toURL(),
+                -1,
+                new PrintWriter(System.out)
+        )
+
+        assertFalse(valid)
+
+        valid = LinkChecker.checkUrl('GET',
+                "https://www.linkedin.com/groups/39757".toURL(),
+                -1,
+                new PrintWriter(System.out)
+        )
+
+        assertTrue(valid)
+
     }
 }
