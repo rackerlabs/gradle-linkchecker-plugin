@@ -103,18 +103,10 @@ public class LinkCheckerPluginTask extends DefaultTask {
         }
     }
 
-    static void logMsg(LogLevel level, PrintWriter printWriter, String format, Object arg) {
-        log.log(level, format, arg);
+    static void logMsg(LogLevel level, PrintWriter printWriter, String format, Object... args) {
+        log.log(level, format, args);
         if (printWriter != null && log.isEnabled(level)) {
-            printWriter.printf(format.replace("{}", "%s"), arg);
-            printWriter.println();
-        }
-    }
-
-    static void logMsg(LogLevel level, PrintWriter printWriter, String format, Object arg1, Object arg2) {
-        log.log(level, format, arg1, arg2);
-        if (printWriter != null && log.isEnabled(level)) {
-            printWriter.printf(format.replace("{}", "%s"), arg1, arg2);
+            printWriter.printf(format.replace("{}", "%s"), args);
             printWriter.println();
         }
     }
