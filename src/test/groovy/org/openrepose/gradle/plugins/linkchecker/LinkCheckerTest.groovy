@@ -10,18 +10,22 @@ class LinkCheckerTest {
     @Test
     public void linkCheckerExampleBasic() {
         def linksToSourceFiles = HashMultimap.create() as Multimap<String, File>
-        def ignoreHostRegexs = new ArrayList<String>()
         def badLinks = new ArrayList<String>()
+
+        LinkCheckerPluginExtension linkCheckerPluginExtension = new LinkCheckerPluginExtension()
+        linkCheckerPluginExtension.with {
+            defaultFile = 'index.html'
+            failOnLocalHost = true
+            failOnIgnoreHost = false
+            failOnBadUrls = false
+            httpURLConnectionTimeout = 1
+            ignoreHostRegexs = new ArrayList<String>()
+        }
 
         int total = LinkChecker.checkLinks(
                 null,
                 new File('./example/src/main/resources/html'),
-                'index.html',
-                true,
-                false,
-                false,
-                1,
-                ignoreHostRegexs,
+                linkCheckerPluginExtension,
                 linksToSourceFiles,
                 badLinks
         )
@@ -34,18 +38,22 @@ class LinkCheckerTest {
     @Test
     public void linkCheckerExampleIgnore() {
         def linksToSourceFiles = HashMultimap.create() as Multimap<String, File>
-        def ignoreHostRegexs = [/www\.google\.com/]
         def badLinks = new ArrayList<String>()
+
+        LinkCheckerPluginExtension linkCheckerPluginExtension = new LinkCheckerPluginExtension()
+        linkCheckerPluginExtension.with {
+            defaultFile = 'index.html'
+            failOnLocalHost = true
+            failOnIgnoreHost = false
+            failOnBadUrls = false
+            httpURLConnectionTimeout = 1
+            ignoreHostRegexs = [/www\.google\.com/]
+        }
 
         int total = LinkChecker.checkLinks(
                 null,
                 new File('./example/src/main/resources/html'),
-                'index.html',
-                true,
-                false,
-                false,
-                1,
-                ignoreHostRegexs,
+                linkCheckerPluginExtension,
                 linksToSourceFiles,
                 badLinks
         )
@@ -58,18 +66,22 @@ class LinkCheckerTest {
     @Test
     public void linkCheckerExampleIgnoreWildcard() {
         def linksToSourceFiles = HashMultimap.create() as Multimap<String, File>
-        def ignoreHostRegexs = [/.*\.google\.com/]
         def badLinks = new ArrayList<String>()
+
+        LinkCheckerPluginExtension linkCheckerPluginExtension = new LinkCheckerPluginExtension()
+        linkCheckerPluginExtension.with {
+            defaultFile = 'index.html'
+            failOnLocalHost = true
+            failOnIgnoreHost = false
+            failOnBadUrls = false
+            httpURLConnectionTimeout = 1
+            ignoreHostRegexs = [/.*\.google\.com/]
+        }
 
         int total = LinkChecker.checkLinks(
                 null,
                 new File('./example/src/main/resources/html'),
-                'index.html',
-                true,
-                false,
-                false,
-                1,
-                ignoreHostRegexs,
+                linkCheckerPluginExtension,
                 linksToSourceFiles,
                 badLinks
         )
@@ -82,18 +94,22 @@ class LinkCheckerTest {
     @Test
     public void linkCheckerExampleIgnoreFail() {
         def linksToSourceFiles = HashMultimap.create() as Multimap<String, File>
-        def ignoreHostRegexs = [/www\.google\.com/]
         def badLinks = new ArrayList<String>()
+
+        LinkCheckerPluginExtension linkCheckerPluginExtension = new LinkCheckerPluginExtension()
+        linkCheckerPluginExtension.with {
+            defaultFile = 'index.html'
+            failOnLocalHost = true
+            failOnIgnoreHost = true
+            failOnBadUrls = false
+            httpURLConnectionTimeout = 1
+            ignoreHostRegexs = [/www\.google\.com/]
+        }
 
         int total = LinkChecker.checkLinks(
                 null,
                 new File('./example/src/main/resources/html'),
-                'index.html',
-                true,
-                true,
-                false,
-                1,
-                ignoreHostRegexs,
+                linkCheckerPluginExtension,
                 linksToSourceFiles,
                 badLinks
         )

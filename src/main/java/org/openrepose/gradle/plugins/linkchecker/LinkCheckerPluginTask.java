@@ -61,12 +61,7 @@ public class LinkCheckerPluginTask extends DefaultTask {
             int total = LinkChecker.checkLinks(
                     printWriter,
                     absoluteStart,
-                    linkCheckerPluginExtension.defaultFile,
-                    linkCheckerPluginExtension.failOnLocalHost,
-                    linkCheckerPluginExtension.failOnIgnoreHost,
-                    linkCheckerPluginExtension.failOnBadUrls,
-                    linkCheckerPluginExtension.httpURLConnectionTimeout,
-                    linkCheckerPluginExtension.ignoreHostRegexs,
+                    linkCheckerPluginExtension,
                     linksToSourceFiles,
                     badLinks
             );
