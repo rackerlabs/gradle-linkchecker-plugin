@@ -2,28 +2,36 @@ package org.openrepose.gradle.plugins.linkchecker
 
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
-import org.junit.Test
+import spock.lang.Shared
+import spock.lang.Specification
+import spock.lang.Unroll
 
 import static org.junit.Assert.assertEquals
-import static org.junit.Assert.assertTrue
-import static org.junit.Assert.assertFalse
 
-class LinkCheckerTest {
-    @Test
-    public void linkCheckerExampleBasic() {
-        def linksToSourceFiles = HashMultimap.create() as Multimap<String, File>
-        def badLinks = new ArrayList<String>()
+class LinkCheckerTest extends Specification {
 
-        LinkCheckerPluginExtension linkCheckerPluginExtension = new LinkCheckerPluginExtension()
+    @Shared
+    LinkCheckerPluginExtension linkCheckerPluginExtension
+
+    void setup() {
+        linkCheckerPluginExtension = new LinkCheckerPluginExtension()
         linkCheckerPluginExtension.with {
             defaultFile = 'index.html'
             failOnLocalHost = true
             failOnIgnoreHost = false
             failOnBadUrls = false
             httpURLConnectionTimeout = 1
-            ignoreHostRegexs = new ArrayList<String>()
         }
+    }
 
+    def "linkCheckerExampleBasic"() {
+        given:
+        def linksToSourceFiles = HashMultimap.create() as Multimap<String, File>
+        def badLinks = new ArrayList<String>()
+
+        linkCheckerPluginExtension.ignoreHostRegexs = new ArrayList<String>()
+
+        when:
         int total = LinkChecker.checkLinks(
                 null,
                 new File('./example/src/main/resources/html'),
@@ -32,26 +40,20 @@ class LinkCheckerTest {
                 badLinks
         )
 
+        then:
         assertEquals("total", 10, total)
         assertEquals("linksToSourceFiles", 9, linksToSourceFiles.size())
         assertEquals("badLinks", 1, badLinks.size())
     }
 
-    @Test
-    public void linkCheckerExampleIgnore() {
+    def "linkCheckerExampleIgnore"() {
+        given:
         def linksToSourceFiles = HashMultimap.create() as Multimap<String, File>
         def badLinks = new ArrayList<String>()
 
-        LinkCheckerPluginExtension linkCheckerPluginExtension = new LinkCheckerPluginExtension()
-        linkCheckerPluginExtension.with {
-            defaultFile = 'index.html'
-            failOnLocalHost = true
-            failOnIgnoreHost = false
-            failOnBadUrls = false
-            httpURLConnectionTimeout = 1
-            ignoreHostRegexs = [/www\.google\.com/]
-        }
+        linkCheckerPluginExtension.ignoreHostRegexs = [/www\.google\.com/]
 
+        when:
         int total = LinkChecker.checkLinks(
                 null,
                 new File('./example/src/main/resources/html'),
@@ -60,26 +62,20 @@ class LinkCheckerTest {
                 badLinks
         )
 
+        then:
         assertEquals("total", 10, total)
         assertEquals("linksToSourceFiles", 9, linksToSourceFiles.size())
         assertEquals("badLinks", 1, badLinks.size())
     }
 
-    @Test
-    public void linkCheckerExampleIgnoreWildcard() {
+    def "linkCheckerExampleIgnoreWildcard"() {
+        given:
         def linksToSourceFiles = HashMultimap.create() as Multimap<String, File>
         def badLinks = new ArrayList<String>()
 
-        LinkCheckerPluginExtension linkCheckerPluginExtension = new LinkCheckerPluginExtension()
-        linkCheckerPluginExtension.with {
-            defaultFile = 'index.html'
-            failOnLocalHost = true
-            failOnIgnoreHost = false
-            failOnBadUrls = false
-            httpURLConnectionTimeout = 1
-            ignoreHostRegexs = [/.*\.google\.com/]
-        }
+        linkCheckerPluginExtension.ignoreHostRegexs = [/.*\.google\.com/]
 
+        when:
         int total = LinkChecker.checkLinks(
                 null,
                 new File('./example/src/main/resources/html'),
@@ -88,26 +84,21 @@ class LinkCheckerTest {
                 badLinks
         )
 
+        then:
         assertEquals("total", 10, total)
         assertEquals("linksToSourceFiles", 9, linksToSourceFiles.size())
         assertEquals("badLinks", 1, badLinks.size())
     }
 
-    @Test
-    public void linkCheckerExampleIgnoreFail() {
+    def "linkCheckerExampleIgnoreFail"() {
+        given:
         def linksToSourceFiles = HashMultimap.create() as Multimap<String, File>
         def badLinks = new ArrayList<String>()
 
-        LinkCheckerPluginExtension linkCheckerPluginExtension = new LinkCheckerPluginExtension()
-        linkCheckerPluginExtension.with {
-            defaultFile = 'index.html'
-            failOnLocalHost = true
-            failOnIgnoreHost = true
-            failOnBadUrls = false
-            httpURLConnectionTimeout = 1
-            ignoreHostRegexs = [/www\.google\.com/]
-        }
+        linkCheckerPluginExtension.failOnIgnoreHost = true
+        linkCheckerPluginExtension.ignoreHostRegexs = [/www\.google\.com/]
 
+        when:
         int total = LinkChecker.checkLinks(
                 null,
                 new File('./example/src/main/resources/html'),
@@ -116,65 +107,47 @@ class LinkCheckerTest {
                 badLinks
         )
 
+        then:
         assertEquals("total", 10, total)
         assertEquals("linksToSourceFiles", 9, linksToSourceFiles.size())
         assertEquals("badLinks", 2, badLinks.size())
     }
 
-    @Test
-    public void checkUrlWithMultipleRequestMethods() {
-
-        boolean valid = LinkChecker.checkUrl(['HEAD','GET'],
-                "https://www.linkedin.com/groups/39757".toURL(),
+    @Unroll
+    def "checkUrlWithMultipleRequestMethods (#url)"() {
+        when:
+        boolean valid = LinkChecker.checkUrl(
+                ['HEAD', 'GET'],
+                url.toURL(),
                 -1,
-                new PrintWriter(System.out)
-        )
+                new PrintWriter(System.out))
 
-        assertTrue(valid)
+        then:
+        assertEquals("url did${valid ? "" : " NOT"} checkout", expected, valid)
 
-        valid = LinkChecker.checkUrl(['HEAD','GET'],
-                "http://plugins.grails.org".toURL(),
-                -1,
-                new PrintWriter(System.out)
-        )
-        assertTrue(valid)
-
-        valid = LinkChecker.checkUrl(['HEAD','GET'],
-                "https://github.com/grails/grails-core/releases/download/v3.3.6/grails-3.3.6.zip".toURL(),
-                -1,
-                new PrintWriter(System.out)
-        )
-
-        assertTrue(valid)
-
-        valid = LinkChecker.checkUrl(['HEAD','GET'],
-                "https://github.com/grails/grails-core/releases/download/v9.9.9/grails-3.3.6.zip".toURL(),
-                -1,
-                new PrintWriter(System.out)
-        )
-
-        assertFalse(valid)
-
+        where:
+        url                                                                               | expected
+        "https://www.linkedin.com/groups/39757"                                           | true
+        "http://plugins.grails.org"                                                       | true
+        "https://github.com/grails/grails-core/releases/download/v3.3.6/grails-3.3.6.zip" | true
+        "https://github.com/grails/grails-core/releases/download/v0.0.0/grails-0.0.0.zip" | false
     }
 
-    @Test
-    public void checkUrlWithSingleRequestMethods() {
-
-        boolean valid = LinkChecker.checkUrl('HEAD',
+    @Unroll
+    def "checkUrlWithSingleRequestMethods (#method)"() {
+        when:
+        boolean valid = LinkChecker.checkUrl(
+                method,
                 "https://www.linkedin.com/groups/39757".toURL(),
                 -1,
-                new PrintWriter(System.out)
-        )
+                new PrintWriter(System.out))
 
-        assertFalse(valid)
+        then:
+        assertEquals("method did${valid ? "" : " NOT"} checkout", expected, valid)
 
-        valid = LinkChecker.checkUrl('GET',
-                "https://www.linkedin.com/groups/39757".toURL(),
-                -1,
-                new PrintWriter(System.out)
-        )
-
-        assertTrue(valid)
-
+        where:
+        method | expected
+        'HEAD' | false
+        'GET'  | true
     }
 }

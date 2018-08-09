@@ -42,6 +42,7 @@ dependencies {
     compile 'com.google.guava:guava:18.0'
     testCompile 'junit:junit:4.12'
     testCompile 'org.hamcrest:hamcrest-all:1.3'
+    testCompile 'org.spockframework:spock-core:0.7-groovy-2.0'
     gradleTest 'com.google.guava:guava:18.0'
     gradleTest 'commons-validator:commons-validator:1.4.0'
     gradleTest 'org.jsoup:jsoup:1.8.2'
