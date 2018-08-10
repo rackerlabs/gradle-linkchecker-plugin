@@ -107,6 +107,12 @@ If the **Default** is **none**, then the parameter is **NOT** optional and a val
 | This is the file where results are logged.
 | `$buildDir/reports/linkchecker.txt`
 | `File`
+
+| `requestMethods`
+| HTTP request methods to check the URL against. Defaults to ['HEAD'].
+| `['HEAD']`
+| `List<String>`
+
 |===
 
 == Examples

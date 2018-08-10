@@ -5,7 +5,9 @@ import org.gradle.internal.impldep.org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 public class LinkCheckerPluginExtension {
 
@@ -68,6 +70,11 @@ public class LinkCheckerPluginExtension {
      * This is the file where results are logged.
      */
     public File logFile;
+
+    /**
+     * HTTP request methods to check the URL against. Defaults to ['HEAD']
+     */
+    public List<String> requestMethods = Arrays.asList("HEAD");
 
     /**
      * This class should not be instantiated without any arguments.

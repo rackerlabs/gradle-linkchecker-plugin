@@ -51,19 +51,7 @@ public class LinkChecker {
      * @param startFile                The file to start from.
      *                                 Links from the file will be checked.
      *                                 Non-URL links (i.e. local files) will be taken for further link checking (feels like recursion).
-     * @param defaultFile              The file name to be used as the default, in case a (non-URL) link points to a folder.
-     *                                 It's what happens on a web server: requests for {@code http://foo/bar} will serve you (typically) {@code http://foo/bar/index.html}.
-     * @param failOnLocalHost          Should this plugin make your build fail if it encounters links to {@code localhost}.
-     *                                 Typically, depending on something local to the build would hamper the portability of the build.
-     * @param failOnIgnoredHost        Should this plugin make your build fail if it encounters links to an ignored host.
-     *                                 This is not the default and is typically only enabled if there are troublesome links that would normally require multi-party authentication to access (e.g. SAML, OAuth).
-     * @param failOnBadUrls            Should this plugin make your build fail if it encounters bad URLs.
-     *                                 This is not the default, in appreciation of the fact that (non-local) URLs are out of our control.
-     *                                 Typically, validating (non-local) URLs would hamper the reproducibility of the build.
-     * @param httpURLConnectionTimeout The specified timeout value, in milliseconds, to be used when opening a communications link to a non-local URL.
-     *                                 A timeout of zero is interpreted as an infinite timeout.
-     *                                 A timeout of less than zero is interpreted to use the system timeout.
-     * @param ignoreHostRegexs         A list of regular expressions of hosts to not even attempt communications with.
+     * @param linkCheckerPluginExtension configuration options encapsulated in {@link LinkCheckerPluginExtension}
      * @param linksToSourceFiles       Populated with all the files processed.
      * @param badLinks                 Populated with all the bad links that could not be processed.
      * @return the total number of files processed
@@ -73,20 +61,15 @@ public class LinkChecker {
     public static int checkLinks(
             PrintWriter printWriter,
             File startFile,
-            String defaultFile,
-            boolean failOnLocalHost,
-            boolean failOnIgnoredHost,
-            boolean failOnBadUrls,
-            int httpURLConnectionTimeout,
-            Collection<String> ignoreHostRegexs,
+            LinkCheckerPluginExtension linkCheckerPluginExtension,
             Multimap<String, File> linksToSourceFiles,
             List<String> badLinks
     ) throws IllegalArgumentException, IOException {
         if (startFile == null) {
             throw new IllegalArgumentException("'startFile' can NOT be NULL");
         }
-        if (defaultFile == null) {
-            defaultFile = "index.html";
+        if (linkCheckerPluginExtension.defaultFile == null) {
+            linkCheckerPluginExtension.defaultFile = "index.html";
         }
         if (linksToSourceFiles == null) {
             linksToSourceFiles = HashMultimap.create();
@@ -107,22 +90,25 @@ public class LinkChecker {
         for (int i = 0; i < todoListLinks.size(); i++) {
             String link = todoListLinks.get(i);
             if (URL_VALIDATOR.isValid(link)) {
-                processLinkAsUrl(printWriter, link, failOnLocalHost, failOnIgnoredHost, failOnBadUrls, httpURLConnectionTimeout, ignoreHostRegexs, badLinks);
+                processLinkAsUrl(printWriter, link, linkCheckerPluginExtension, badLinks);
             } else {
-                processLinkAsFile(printWriter, link, defaultFile, todoListLinks, linksToSourceFiles, badLinks);
+                processLinkAsFile(printWriter, link, linkCheckerPluginExtension.defaultFile, todoListLinks, linksToSourceFiles, badLinks);
             }
         }
         return todoListLinks.size();
     }
 
+    /**
+     *
+     * @param printWriter The file to log to.
+     * @param link The link being validated
+     * @param linkCheckerPluginExtension configuration options encapsulated in {@link LinkCheckerPluginExtension}
+     * @param badLinks Populated with all the bad links that could not be processed.
+     */
     private static void processLinkAsUrl(
             PrintWriter printWriter,
             String link,
-            boolean failOnLocalHost,
-            boolean failOnIgnoredHost,
-            boolean failOnBadUrls,
-            int httpURLConnectionTimeout,
-            Collection<String> ignoreHostRegexs,
+            LinkCheckerPluginExtension linkCheckerPluginExtension,
             List<String> badLinks
     ) {
         logMsg(INFO, printWriter, "Processing URL: {}", link);
@@ -134,37 +120,19 @@ public class LinkChecker {
                 String host = url.getHost();
                 if (host.equals("localhost")) {
                     logMsg(INFO, printWriter, "URL of localhost indicates suspicious environment dependency: {}", url);
-                    if (failOnLocalHost) {
+                    if (linkCheckerPluginExtension.failOnLocalHost) {
                         badLinks.add(link);
                     }
-                } else if (!(ignoreHostRegexs.stream().filter(host::matches).collect(Collectors.toList()).isEmpty())) {
+                } else if (!(linkCheckerPluginExtension.ignoreHostRegexs.stream().filter(host::matches).collect(Collectors.toList()).isEmpty())) {
                     logMsg(INFO, printWriter, "The host destination is configured to be ignored: {}", host);
-                    if (failOnIgnoredHost) {
+                    if (linkCheckerPluginExtension.failOnIgnoreHost) {
                         badLinks.add(link);
                     }
                 } else {
-                    try {
-                        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                        connection.setRequestMethod("HEAD");
-                        if (httpURLConnectionTimeout >= 0) {
-                            connection.setConnectTimeout(httpURLConnectionTimeout);
-                        }
-                        connection.connect();
-                        int responseCode = connection.getResponseCode();
-                        if (300 <= responseCode && responseCode < 400) {
-                            logMsg(INFO, printWriter, "Got response code {} for URL: {}", responseCode, url);
-                        } else if (responseCode != HttpURLConnection.HTTP_OK) {
-                            logMsg(WARN, printWriter, "Got response code {} for URL: {}", responseCode, url);
-                            addBadUrlIfConfigured(link, failOnBadUrls, badLinks);
-                        }
-                    } catch (InterruptedIOException | ConnectException | UnknownHostException exception) {
-                        logMsg(WARN, printWriter, "Cannot connect to URL: {}", url);
-                        logMsg(DEBUG, printWriter, "Source:", exception);
-                        addBadUrlIfConfigured(link, failOnBadUrls, badLinks);
-                    } catch (IOException exception) {
-                        logMsg(WARN, printWriter, "Problem with URL: {}", url);
-                        logMsg(DEBUG, printWriter, "Source:", exception);
-                        addBadUrlIfConfigured(link, failOnBadUrls, badLinks);
+
+                    boolean valid = checkUrl(linkCheckerPluginExtension.requestMethods, url, linkCheckerPluginExtension.httpURLConnectionTimeout, printWriter);
+                    if(!valid) {
+                        addBadUrlIfConfigured(link, linkCheckerPluginExtension.failOnBadUrls, badLinks);
                     }
                 }
             } else {
@@ -172,8 +140,64 @@ public class LinkChecker {
             }
         } catch (MalformedURLException exception) {
             logMsg(WARN, printWriter, "Bad URL: {}", link, exception);
-            addBadUrlIfConfigured(link, failOnBadUrls, badLinks);
+            addBadUrlIfConfigured(link, linkCheckerPluginExtension.failOnBadUrls, badLinks);
         }
+    }
+
+    /**
+     * @param requestMethods HTTP Request Methods (e.g. GET, HEAD) used to validate the URL
+     * @param url The URL being validated
+     * @param httpURLConnectionTimeout {@link LinkCheckerPluginExtension#httpURLConnectionTimeout}
+     * @param printWriter The file to log to.
+     */
+    public static boolean checkUrl(List<String> requestMethods,
+                                   URL url,
+                                   int httpURLConnectionTimeout,
+                                   PrintWriter printWriter) {
+        for (String requestMethod : requestMethods) {
+            boolean valid = checkUrl(requestMethod, url, httpURLConnectionTimeout, printWriter);
+            if (valid) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     *
+     * @param requestMethod HTTP Request Method (e.g. GET, HEAD) used to validate the URL
+     * @param url The URL being validated
+     * @param httpURLConnectionTimeout {@link LinkCheckerPluginExtension#httpURLConnectionTimeout}
+     * @param printWriter The file to log to.
+     * @return true if (300 <= response code < 400) or responseCode == 200, false if other code or exception
+     */
+    public static boolean checkUrl(String requestMethod, URL url, int httpURLConnectionTimeout, PrintWriter printWriter) {
+        try {
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod(requestMethod);
+            if (httpURLConnectionTimeout >= 0) {
+                connection.setConnectTimeout(httpURLConnectionTimeout);
+            }
+            connection.connect();
+            int responseCode = connection.getResponseCode();
+            if (300 <= responseCode && responseCode < 400) {
+                logMsg(INFO, printWriter, "Got response code {} for URL: {} => {}", responseCode, requestMethod, url);
+            } else if (responseCode != HttpURLConnection.HTTP_OK) {
+                logMsg(WARN, printWriter, "Got response code {} for URL: {} => {}", responseCode, requestMethod, url);
+                return false;
+            } else {
+                logMsg(INFO, printWriter, "Got response code {} for URL: {} => {}", responseCode, requestMethod, url);
+            }
+        } catch (InterruptedIOException | ConnectException | UnknownHostException exception) {
+            logMsg(WARN, printWriter, "Cannot connect to URL: {}", url);
+            logMsg(DEBUG, printWriter, "Source:", exception);
+            return false;
+        } catch (IOException exception) {
+            logMsg(WARN, printWriter, "Problem with URL: {}", url);
+            logMsg(DEBUG, printWriter, "Source:", exception);
+            return false;
+        }
+        return true;
     }
 
     private static void addBadUrlIfConfigured(String link, boolean failOnBadUrls, List<String> badLinks) {
